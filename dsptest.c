@@ -29,12 +29,14 @@
 #include <stdio.h>
 #include <sched.h>
 #include <pthread.h>
-#include <sys/param.h>
 
-#if defined(BSD)
+#if defined(__FreeBSD__)
+#include <sys/param.h>
 #include <sys/cpuset.h>
 #define cpu_set_t cpuset_t
 #include <pthread_np.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 #endif
 
 #include <unistd.h>
@@ -235,7 +237,7 @@ static int get_avaliable_cpu_count(void)
 
   pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &set);
 
-#if defined(BSD)
+#if defined(__FreeBSD__)
   int ncpu;
   size_t length = sizeof( ncpu );
 
@@ -245,9 +247,9 @@ static int get_avaliable_cpu_count(void)
   }
 
   return ncpu;
-#endif
-
+#else
   return CPU_COUNT(&set);
+#endif
 }
 
 int main(int argc, char ** argv)
