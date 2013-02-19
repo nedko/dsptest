@@ -1,6 +1,7 @@
 /* -*- Mode: C ; c-basic-offset: 2 -*- */
 /* dsptest - test how much CPUs/cores/threads affect each other.
  * Copyright (C) 2013 Nedko Arnaudov <nedko@arnaudov.name>
+ * Copyright (C) 2013 Petko Bordjukov <bordjukov@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
 
 #define DISTURB_SWITCH_PERIOD 5
 #define TEST_LENGTH DISTURB_SWITCH_PERIOD * 4
-#define FIFO_PRIORITY 30
+#define FIFO_PRIORITY 10
 //#define KEEP_ALL_CORES_BUSY
 
 #define _GNU_SOURCE 
@@ -28,11 +29,13 @@
 #include <stdio.h>
 #include <sched.h>
 #include <pthread.h>
-
 #include <sys/param.h>
+
+#if defined(BSD)
 #include <sys/cpuset.h>
 #define cpu_set_t cpuset_t
 #include <pthread_np.h>
+#endif
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -232,14 +235,19 @@ static int get_avaliable_cpu_count(void)
 
   pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &set);
 
+#if defined(BSD)
   int ncpu;
   size_t length = sizeof( ncpu );
+
   if( sysctlbyname("hw.ncpu", &ncpu, &length, NULL, 0) )
   {
     ncpu = 1;
   }
 
   return ncpu;
+#endif
+
+  return CPU_COUNT(&set);
 }
 
 int main(int argc, char ** argv)
