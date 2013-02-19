@@ -18,7 +18,7 @@
 
 #define DISTURB_SWITCH_PERIOD 5
 #define TEST_LENGTH DISTURB_SWITCH_PERIOD * 4
-#define FIFO_PRIORITY 10
+#define FIFO_PRIORITY 30
 //#define KEEP_ALL_CORES_BUSY
 
 #define _GNU_SOURCE 
@@ -28,6 +28,12 @@
 #include <stdio.h>
 #include <sched.h>
 #include <pthread.h>
+
+#include <sys/param.h>
+#include <sys/cpuset.h>
+#define cpu_set_t cpuset_t
+#include <pthread_np.h>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +47,7 @@ static bool configure_thead(int priority, int cpu)
   CPU_ZERO(&set);
   CPU_SET(cpu, &set);
 
-  if (sched_setaffinity(0, sizeof(cpu_set_t), &set) != 0)
+  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &set) != 0)
   {
     perror("Cannot set scheduling affinity");
     return false;
@@ -224,9 +230,16 @@ static int get_avaliable_cpu_count(void)
 
   CPU_ZERO(&set);
 
-  sched_getaffinity(0, sizeof(cpu_set_t), &set);
+  pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &set);
 
-  return CPU_COUNT(&set);
+  int ncpu;
+  size_t length = sizeof( ncpu );
+  if( sysctlbyname("hw.ncpu", &ncpu, &length, NULL, 0) )
+  {
+    ncpu = 1;
+  }
+
+  return ncpu;
 }
 
 int main(int argc, char ** argv)
