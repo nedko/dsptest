@@ -133,13 +133,14 @@ static const struct work_descriptor
   const work work;
   const char ch;
   const char const * name;
+  const char const * descr;
 } g_work_descriptors[] = {
-  { work_float, 'f', "float" },
-  { work_int,   'i', "int" },
-  { work_comb1, '1', "comb1" },
-  { work_comb2, '2', "comb2" },
-  { NULL,       'n', "null" },
-  { NULL,        0,   NULL },
+  { work_float, 'f', "float", "floating point test (fibbonaci)" },
+  { work_int,   'i', "int",   "integer test (fibbonaci)" },
+  { work_comb1, '1', "comb1", "combined test that first runs float test, then int test" },
+  { work_comb2, '2', "comb2", "combined test that first runs int test, then float test" },
+  { NULL,       'n', "null",  "null test that spins (branching, function call, etc)" },
+  { NULL,        0,   NULL,   NULL },
 };
 
 static work decode_work(const char * str)
@@ -267,6 +268,31 @@ static int get_avaliable_cpu_count(void)
 #endif
 }
 
+static void help(FILE * stream)
+{
+  const struct work_descriptor * descr_ptr;
+
+  fprintf(
+    stream,
+    "dspload [<dsp_cpu> <dsp_work> <disturb_cpu> <disturb_work> [<extra_work>]]\n"
+    "\n"
+    " <dsp_cpu>, <disturb_cpu> - cpu/core index (zero based). default is 0 for dsp_cpu and 1 for disturb_cpu.\n"
+    " <dsp_work>, <disturb_work>, <extra_work> - work to be done by the threads.\n"
+    "\n"
+    "If <extra_work> is specified, SCHED_OTHER threads will be started on cpu/cores\n"
+    "that are not occupied by the dsp or disturb thread.\n"
+    "\n"
+    "The dsp and disturb threads are SCHED_FIFO ones and run at priority %d\n"
+    "\n"
+    "Work can be specified as full string or single char:\n",
+    FIFO_PRIORITY);
+
+  for (descr_ptr = g_work_descriptors; descr_ptr->name; descr_ptr++)
+  {
+    fprintf(stream, " %5s or %c - %s\n", descr_ptr->name, descr_ptr->ch, descr_ptr->descr);
+  }
+}
+
 int main(int argc, char ** argv)
 {
   int counter;
@@ -286,23 +312,31 @@ int main(int argc, char ** argv)
   int max_cpus;
   work extra_work;
 
+  if (argc != 1 && (argc < 5 || argc > 6))
+  {
+    help(stderr);
+    exit(1);
+  }
+
   max_cpus = get_avaliable_cpu_count();
   printf("%d cpu(s)\n", max_cpus);
 
-  dsp_cpu = 0;
-  disturb_cpu = 1;
-  dsp_work = work_float;
-  disturb_work = work_float;
-
-  if (argc == 5 || argc == 6)
+  if (argc >= 5)
   {
     dsp_cpu = atoi(argv[1]);
     dsp_work = decode_work(argv[2]);
     disturb_cpu = atoi(argv[3]);
     disturb_work = decode_work(argv[4]);
   }
+  else
+  {
+    dsp_cpu = 0;
+    disturb_cpu = 1;
+    dsp_work = work_float;
+    disturb_work = work_float;
+  }
 
-  if (argc == 6)
+  if (argc >= 6)
   {
     extra_work = decode_work(argv[5]);
   }
