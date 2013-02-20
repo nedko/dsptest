@@ -20,7 +20,6 @@
 #define DISTURB_SWITCH_PERIOD 5
 #define TEST_LENGTH DISTURB_SWITCH_PERIOD * 4
 #define FIFO_PRIORITY 10
-//#define KEEP_ALL_CORES_BUSY
 
 #define _GNU_SOURCE 
 
@@ -264,13 +263,12 @@ int main(int argc, char ** argv)
   unsigned int disturb_counter_old;
   int dsp_cpu;
   int disturb_cpu;
-  void * dsp_work;
-  void * disturb_work;
-#if defined(KEEP_ALL_CORES_BUSY)
-  struct thread_params unused_threads[CPU_SETSIZE];
+  work dsp_work;
+  work disturb_work;
+  struct thread_params extra_threads[CPU_SETSIZE];
   int i;
-#endif
   int max_cpus;
+  work extra_work;
 
   max_cpus = get_avaliable_cpu_count();
   printf("%d cpu(s)\n", max_cpus);
@@ -280,7 +278,7 @@ int main(int argc, char ** argv)
   dsp_work = work_float;
   disturb_work = work_float;
 
-  if (argc == 5)
+  if (argc == 5 || argc == 6)
   {
     dsp_cpu = atoi(argv[1]);
     dsp_work = decode_work(argv[2]);
@@ -288,18 +286,25 @@ int main(int argc, char ** argv)
     disturb_work = decode_work(argv[4]);
   }
 
-#if defined(KEEP_ALL_CORES_BUSY)
+  if (argc == 6)
+  {
+    extra_work = decode_work(argv[5]);
+  }
+  else
+  {
+    max_cpus = 0;               /* disable extra threads */
+  }
+
   for (i = 0; i < max_cpus; i++)
   {
     if (i != dsp_cpu && i != disturb_cpu)
     {
-      if (!start_thread(unused_threads + i, "unused", 0, i, dsp_work))
+      if (!start_thread(extra_threads + i, "extra", 0, i, extra_work))
       {
         exit(1);
       }
     }
   }
-#endif
 
   printf("-----------------------\n");
   printf("       dsp |  disturb\n");
@@ -370,15 +375,13 @@ int main(int argc, char ** argv)
 
   stop_thread(&dsp_thread);
 
-#if defined(KEEP_ALL_CORES_BUSY)
   for (i = 0; i < max_cpus; i++)
   {
     if (i != dsp_cpu && i != disturb_cpu)
     {
-      stop_thread(unused_threads + i);
+      stop_thread(extra_threads + i);
     }
   }
-#endif
 
   return 0;
 }
