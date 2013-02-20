@@ -128,6 +128,41 @@ void work_comb2(void)
   work_float();
 }
 
+static work decode_work(const char * str)
+{
+  if (strcmp(str, "f") == 0)
+  {
+    return work_float;
+  }
+
+  if (strcmp(str, "i") == 0)
+  {
+    return work_int;
+  }
+
+  if (strcmp(str, "1") == 0)
+  {
+    return work_comb1;
+  }
+
+  if (strcmp(str, "2") == 0)
+  {
+    return work_comb2;
+  }
+
+  return NULL;
+}
+
+static const char * work_descr(work work)
+{
+  if (work == work_float) return "float";
+  if (work == work_int) return "int";
+  if (work == work_comb1) return "comb1";
+  if (work == work_comb2) return "comb2";
+  if (work == NULL) return "null";
+  return "?";
+}
+
 #define params_ptr ((struct thread_params *)ctx)
 static void * thread(void * ctx)
 {
@@ -155,7 +190,7 @@ static bool start_thread(struct thread_params * params_ptr, const char * name, i
 {
   int ret;
 
-  printf("starting %s thread at priority %d on cpu/core %d\n", name, priority, cpu);
+  printf("starting %s thread to do %s work at priority %d on cpu/core %d\n", name, work_descr(work), priority, cpu);
 
   params_ptr->name = name;
   params_ptr->priority = priority;
@@ -191,41 +226,6 @@ bool stop_thread(struct thread_params * params_ptr)
   }
 
   return true;
-}
-
-static work decode_work(const char * str)
-{
-  if (strcmp(str, "f") == 0)
-  {
-    return work_float;
-  }
-
-  if (strcmp(str, "i") == 0)
-  {
-    return work_int;
-  }
-
-  if (strcmp(str, "1") == 0)
-  {
-    return work_comb1;
-  }
-
-  if (strcmp(str, "2") == 0)
-  {
-    return work_comb2;
-  }
-
-  return NULL;
-}
-
-static const char * work_descr(work work)
-{
-  if (work == work_float) return "float";
-  if (work == work_int) return "int";
-  if (work == work_comb1) return "comb1";
-  if (work == work_comb2) return "comb2";
-  if (work == NULL) return "null";
-  return "?";
 }
 
 static int get_avaliable_cpu_count(void)
