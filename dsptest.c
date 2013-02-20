@@ -274,7 +274,12 @@ static void help(FILE * stream)
 
   fprintf(
     stream,
-    "dspload [<dsp_cpu> <dsp_work> <disturb_cpu> <disturb_work> [<extra_work>]]\n"
+    "dsptest - test how much CPUs/cores/threads affect each other.\n"
+    "\n"
+    "Copyright (C) 2013 Nedko Arnaudov <nedko@arnaudov.name>\n"
+    "Copyright (C) 2013 Petko Bordjukov <bordjukov@gmail.com>\n"
+    "\n"
+    "Usage: dspload [<dsp_cpu> <dsp_work> <disturb_cpu> <disturb_work> [<extra_work>]]\n"
     "\n"
     " <dsp_cpu>, <disturb_cpu> - cpu/core index (zero based). default is 0 for dsp_cpu and 1 for disturb_cpu.\n"
     " <dsp_work>, <disturb_work>, <extra_work> - work to be done by the threads.\n"
@@ -291,6 +296,23 @@ static void help(FILE * stream)
   {
     fprintf(stream, " %5s or %c - %s\n", descr_ptr->name, descr_ptr->ch, descr_ptr->descr);
   }
+
+  fprintf(
+    stream,
+    "\n"
+    "This program is free software: you can redistribute it and/or modify\n"
+    "it under the terms of the GNU General Public License as published by\n"
+    "the Free Software Foundation, either version 3 of the License, or\n"
+    "(at your option) any later version.\n"
+    "\n"
+    "This program is distributed in the hope that it will be useful,\n"
+    "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+    "GNU General Public License for more details.\n"
+    "\n"
+    "You should have received a copy of the GNU General Public License\n"
+    "along with this program.  If not, see <http://www.gnu.org/licenses/>.\n"
+    );
 }
 
 int main(int argc, char ** argv)
