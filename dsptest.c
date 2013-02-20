@@ -128,26 +128,37 @@ void work_comb2(void)
   work_float();
 }
 
+static const struct work_descriptor
+{
+  const work work;
+  const char ch;
+  const char const * name;
+} g_work_descriptors[] = {
+  { work_float, 'f', "float" },
+  { work_int,   'i', "int" },
+  { work_comb1, '1', "comb1" },
+  { work_comb2, '2', "comb2" },
+  { NULL,       'n', "null" },
+  { NULL,        0,   NULL },
+};
+
 static work decode_work(const char * str)
 {
-  if (strcmp(str, "f") == 0)
+  const struct work_descriptor * descr_ptr;
+
+  if (str[0] == '\0')
   {
-    return work_float;
+    return NULL;
   }
 
-  if (strcmp(str, "i") == 0)
+  for (descr_ptr = g_work_descriptors; descr_ptr->name; descr_ptr++)
   {
-    return work_int;
-  }
-
-  if (strcmp(str, "1") == 0)
-  {
-    return work_comb1;
-  }
-
-  if (strcmp(str, "2") == 0)
-  {
-    return work_comb2;
+    if ((str[1] == '\0' &&
+         str[0] == descr_ptr->ch) ||
+        strcmp(str, descr_ptr->name) == 0)
+    {
+      return descr_ptr->work;
+    }
   }
 
   return NULL;
@@ -155,11 +166,16 @@ static work decode_work(const char * str)
 
 static const char * work_descr(work work)
 {
-  if (work == work_float) return "float";
-  if (work == work_int) return "int";
-  if (work == work_comb1) return "comb1";
-  if (work == work_comb2) return "comb2";
-  if (work == NULL) return "null";
+  const struct work_descriptor * descr_ptr;
+
+  for (descr_ptr = g_work_descriptors; descr_ptr->name; descr_ptr++)
+  {
+    if (descr_ptr->work == work)
+    {
+      return descr_ptr->name;
+    }
+  }
+
   return "?";
 }
 
