@@ -333,6 +333,11 @@ int main(int argc, char ** argv)
   int i;
   int max_cpus;
   work extra_work;
+  struct
+  {
+    float acc;
+    unsigned int periods;
+  } avg[1];
 
   if (argc != 1 && (argc < 5 || argc > 6))
   {
@@ -398,6 +403,11 @@ int main(int argc, char ** argv)
   dsp_counter_old = 0;
   disturb_counter_old = 0;
 
+  avg[0].acc = 0;
+  avg[0].periods = 0;
+  avg[1].acc = 0;
+  avg[1].periods = 0;
+
   for (counter = 0; counter < TEST_LENGTH; counter++)
   {
     if (counter % DISTURB_SWITCH_PERIOD == 0)
@@ -435,6 +445,8 @@ int main(int argc, char ** argv)
     usleep(1000000);
     dsp_counter = dsp_thread.counter;
     disturb_counter = disturb_thread.counter;
+    avg[disturb ? 1 : 0].periods++;
+    avg[disturb ? 1 : 0].acc += dsp_counter - dsp_counter_old;
     printf("%10u %10u\n", dsp_counter - dsp_counter_old, disturb_counter - disturb_counter_old);
     dsp_counter_old = dsp_counter;
     disturb_counter_old = disturb_counter;
@@ -454,6 +466,10 @@ int main(int argc, char ** argv)
       stop_thread(extra_threads + i);
     }
   }
+
+  avg[0].acc /= avg[0].periods;
+  avg[1].acc /= avg[1].periods;
+  printf("Disturb influence %5.2f%%\n", avg[1].acc * 100 / avg[0].acc - 100);
 
   return 0;
 }
